@@ -1,0 +1,47 @@
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+
+public class StringCalculator {
+
+    public int add(String input) {
+        if (input == null || input.isEmpty()) {
+            return 0;
+        }
+
+        String delimiterPattern = "[,:]";
+        String numbers = input;
+
+        if (input.startsWith("//")) {
+            int delimiterEnd = input.indexOf("\n");
+            String customDelimiter = input.substring(2, delimiterEnd);
+            delimiterPattern = Pattern.quote(customDelimiter);
+            numbers = input.substring(delimiterEnd + 1);
+        }
+
+        String[] tokens = numbers.split(delimiterPattern);
+        List<Integer> negatives = new ArrayList<>();
+        int sum = 0;
+
+        for (String token : tokens) {
+            int number = Integer.parseInt(token.trim());
+            if (number < 0) {
+                negatives.add(number);
+            }
+            sum += number;
+        }
+
+        if (!negatives.isEmpty()) {
+            StringBuilder message = new StringBuilder("negative numbers not allowed: ");
+            for (int i = 0; i < negatives.size(); i++) {
+                if (i > 0) {
+                    message.append(", ");
+                }
+                message.append(negatives.get(i));
+            }
+            throw new RuntimeException(message.toString());
+        }
+
+        return sum;
+    }
+}
