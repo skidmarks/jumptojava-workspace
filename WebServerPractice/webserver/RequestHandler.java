@@ -19,11 +19,10 @@ public class RequestHandler extends Thread {
     }
 
     public void run() {
-        log.log(Level.DEBUG, "New Client connnect! connected IP : {0}, Port : {1}", connection.getInetAddress(),
+        log.log(Level.DEBUG, "New Client connnect! connected IP : {0}, Port : {}", connection.getInetAddress(),
                 connection.getPort());
 
-        try (InputStream in = connection.getInputStream();
-                OutputStream out = connection.getOutputStream()) {
+        try (InputStream in = connection.getInputStream();OutputStream out = connection.getOutputStream()) {
             DataOutputStream dos = new DataOutputStream(out);
             byte[] body = "Hello World".getBytes();
             response200Header(dos, body.length);
