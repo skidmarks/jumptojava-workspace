@@ -11,7 +11,9 @@ import java.lang.System.Logger.Level;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
+import model.User;
 import util.HttpRequestUtils;
 
 public class RequestHandler extends Thread {
@@ -46,7 +48,18 @@ public class RequestHandler extends Thread {
                 log.log(Level.DEBUG, line);
             }
 
-            String path = HttpRequestUtils.getPath(requestLine);
+            String url = HttpRequestUtils.getPath(requestLine);
+            int index = url.indexOf("?");
+            String path = index == -1 ? url : url.substring(0, index);
+
+            if ("/user/create".equals(path)) {
+                String queryString = url.substring(index + 1);
+                Map<String, String> params = HttpRequestUtils.parseQueryString(queryString);
+                User user = new User(params.get("userId"), params.get("password"), params.get("name"),
+                        params.get("email"));
+                log.log(Level.INFO, "회원가입: " + user);
+                path = "/index.html";
+            }
 
             DataOutputStream dos = new DataOutputStream(out);
             byte[] body = Files.readAllBytes(Path.of(WEBAPP_PATH, path));
