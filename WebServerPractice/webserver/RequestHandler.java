@@ -11,10 +11,12 @@ import java.lang.System.Logger.Level;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
 
 import model.User;
 import util.HttpRequestUtils;
+import util.IOUtils;
 
 public class RequestHandler extends Thread {
 
@@ -39,6 +41,9 @@ public class RequestHandler extends Thread {
             }
             log.log(Level.DEBUG, requestLine);
 
+            String method = requestLine.split(" ")[0];
+
+            Map<String, String> headers = new HashMap<>();
             String line = requestLine;
             while (!"".equals(line)) {
                 line = br.readLine();
@@ -46,6 +51,10 @@ public class RequestHandler extends Thread {
                     return;
                 }
                 log.log(Level.DEBUG, line);
+                int colonIndex = line.indexOf(": ");
+                if (colonIndex != -1) {
+                    headers.put(line.substring(0, colonIndex), line.substring(colonIndex + 2));
+                }
             }
 
             String url = HttpRequestUtils.getPath(requestLine);
@@ -53,7 +62,13 @@ public class RequestHandler extends Thread {
             String path = index == -1 ? url : url.substring(0, index);
 
             if ("/user/create".equals(path)) {
-                String queryString = url.substring(index + 1);
+                String queryString;
+                if ("POST".equals(method)) {
+                    int contentLength = Integer.parseInt(headers.get("Content-Length"));
+                    queryString = IOUtils.readData(br, contentLength);
+                } else {
+                    queryString = url.substring(index + 1);
+                }
                 Map<String, String> params = HttpRequestUtils.parseQueryString(queryString);
                 User user = new User(params.get("userId"), params.get("password"), params.get("name"),
                         params.get("email"));
