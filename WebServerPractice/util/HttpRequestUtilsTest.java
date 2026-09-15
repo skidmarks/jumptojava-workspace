@@ -34,7 +34,7 @@ public class HttpRequestUtilsTest {
         assertEquals("javajigi", params.get("userId"));
         assertEquals("password", params.get("password"));
         assertEquals("JaeSung", params.get("name"));
-        assertEquals("javajigi%40slipp.net", params.get("email"));
+        assertEquals("javajigi@slipp.net", params.get("email"));
     }
 
     @Test
@@ -46,5 +46,11 @@ public class HttpRequestUtilsTest {
     @Test
     public void parseQueryString_빈_문자열이면_빈_맵을_반환한다() {
         assertEquals(0, HttpRequestUtils.parseQueryString("").size());
+    }
+
+    @Test
+    public void parseQueryString_퍼센트_인코딩된_한글을_디코딩한다() {
+        Map<String, String> params = HttpRequestUtils.parseQueryString("name=%ED%99%8D%EA%B8%B8%EB%8F%99");
+        assertEquals("홍길동", params.get("name"));
     }
 }

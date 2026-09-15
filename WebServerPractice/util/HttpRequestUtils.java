@@ -1,5 +1,8 @@
 package util;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,9 +22,17 @@ public class HttpRequestUtils {
         for (String pair : queryString.split("&")) {
             String[] tokens = pair.split("=");
             if (tokens.length == 2) {
-                params.put(tokens[0], tokens[1]);
+                params.put(tokens[0], decode(tokens[1]));
             }
         }
         return params;
+    }
+
+    private static String decode(String value) {
+        try {
+            return URLDecoder.decode(value, StandardCharsets.UTF_8.name());
+        } catch (UnsupportedEncodingException e) {
+            return value;
+        }
     }
 }
