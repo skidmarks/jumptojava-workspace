@@ -9,11 +9,13 @@ import java.io.OutputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
+import db.DataBase;
 import model.User;
 import util.HttpRequestUtils;
 import util.IOUtils;
@@ -72,14 +74,45 @@ public class RequestHandler extends Thread {
                 Map<String, String> params = HttpRequestUtils.parseQueryString(queryString);
                 User user = new User(params.get("userId"), params.get("password"), params.get("name"),
                         params.get("email"));
+                DataBase.addUser(user);
                 log.log(Level.INFO, "회원가입: " + user);
-                path = "/index.html";
+
+                DataOutputStream dos = new DataOutputStream(out);
+                response302Header(dos, "/index.html");
+                return;
             }
 
             DataOutputStream dos = new DataOutputStream(out);
-            byte[] body = Files.readAllBytes(Path.of(WEBAPP_PATH, path));
+            byte[] body = "/user/list".equals(path)
+                    ? createUserListHtml().getBytes(StandardCharsets.UTF_8)
+                    : Files.readAllBytes(Path.of(WEBAPP_PATH, path));
             response200Header(dos, body.length);
             responseBody(dos, body);
+
+        } catch (IOException e) {
+            log.log(Level.ERROR, e.getMessage());
+        }
+    }
+
+    private String createUserListHtml() {
+        StringBuilder html = new StringBuilder();
+        html.append("<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>회원목록</title></head><body>");
+        html.append("<h1>회원목록</h1>");
+        html.append("<table border=\"1\"><tr><th>아이디</th><th>이름</th><th>이메일</th></tr>");
+        for (User user : DataBase.findAll()) {
+            html.append("<tr><td>").append(user.getUserId()).append("</td><td>")
+                    .append(user.getName()).append("</td><td>")
+                    .append(user.getEmail()).append("</td></tr>");
+        }
+        html.append("</table></body></html>");
+        return html.toString();
+    }
+
+    private void response302Header(DataOutputStream dos, String location) {
+        try {
+            dos.writeBytes("HTTP/1.1 302 Found\r\n");
+            dos.writeBytes("Location: " + location + "\r\n");
+            dos.writeBytes("\r\n");
 
         } catch (IOException e) {
             log.log(Level.ERROR, e.getMessage());
