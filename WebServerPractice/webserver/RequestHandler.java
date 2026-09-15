@@ -12,6 +12,8 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import util.HttpRequestUtils;
+
 public class RequestHandler extends Thread {
 
     private static final Logger log = System.getLogger(RequestHandler.class.getName());
@@ -44,7 +46,7 @@ public class RequestHandler extends Thread {
                 log.log(Level.DEBUG, line);
             }
 
-            String path = getPath(requestLine);
+            String path = HttpRequestUtils.getPath(requestLine);
 
             DataOutputStream dos = new DataOutputStream(out);
             byte[] body = Files.readAllBytes(Path.of(WEBAPP_PATH, path));
@@ -54,11 +56,6 @@ public class RequestHandler extends Thread {
         } catch (IOException e) {
             log.log(Level.ERROR, e.getMessage());
         }
-    }
-
-    private String getPath(String requestLine) {
-        String[] tokens = requestLine.split(" ");
-        return tokens[1];
     }
 
     private void response200Header(DataOutputStream dos, int lengthOfBodyContent) {
