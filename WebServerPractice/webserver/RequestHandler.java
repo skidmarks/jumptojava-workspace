@@ -1,16 +1,21 @@
 package webserver;
 
+import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class RequestHandler extends Thread {
 
     private static final Logger log = System.getLogger(RequestHandler.class.getName());
+    private static final String WEBAPP_PATH = "./webapp";
 
     private Socket connection;
 
@@ -23,14 +28,37 @@ public class RequestHandler extends Thread {
                 connection.getPort());
 
         try (InputStream in = connection.getInputStream();OutputStream out = connection.getOutputStream()) {
+            BufferedReader br = new BufferedReader(new InputStreamReader(in));
+            String requestLine = br.readLine();
+            if (requestLine == null) {
+                return;
+            }
+            log.log(Level.DEBUG, requestLine);
+
+            String line = requestLine;
+            while (!"".equals(line)) {
+                line = br.readLine();
+                if (line == null) {
+                    return;
+                }
+                log.log(Level.DEBUG, line);
+            }
+
+            String path = getPath(requestLine);
+
             DataOutputStream dos = new DataOutputStream(out);
-            byte[] body = "Hello World".getBytes();
+            byte[] body = Files.readAllBytes(Path.of(WEBAPP_PATH, path));
             response200Header(dos, body.length);
             responseBody(dos, body);
 
         } catch (IOException e) {
             log.log(Level.ERROR, e.getMessage());
         }
+    }
+
+    private String getPath(String requestLine) {
+        String[] tokens = requestLine.split(" ");
+        return tokens[1];
     }
 
     private void response200Header(DataOutputStream dos, int lengthOfBodyContent) {
